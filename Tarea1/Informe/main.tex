@@ -1,0 +1,306 @@
+\input{estilo/estilo.tex}
+
+\title{Template Informes 2.0} % Nombre archivo en Overleaf
+\newcommand{\ramo}{EL4106 Inteligencia Computacional}
+\newcommand{\departamento}{Departamento de Ingeniería Eléctrica}
+\newcommand{\semestre}{Semestre Otoño 2019}
+
+\newcommand{\hipertitulo}{}
+\newcommand{\titulo}{Informe práctica profesional 1}
+\newcommand{\subtitulo}{Banco Santander}
+
+\newcommand{\autor}{Diego Irarrázaval I.}
+
+
+\input{estilo/header.tex}
+\input{estilo/program-leng.tex}
+
+
+%\linespread{1.2} 				% Interlineado
+%\setlength\parindent{0pt} 		% Longitud sangría
+
+\begin{document}
+%----------------------------------------------------------------------
+%	Portada
+%----------------------------------------------------------------------
+\input{estilo/portada.tex}
+%----------------------------------------------------------------------
+%	Documento
+%----------------------------------------------------------------------
+
+\pagenumbering{Roman}
+\setcounter{page}{1}
+\tableofcontents 
+\newpage
+\listoffigures
+\listoftables
+\lstlistoflistings
+
+%\addcontentsline{toc}{chapter}{Nombre Sección} % Para forzar aparición en el Índice
+
+\newpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\newpage
+\section{Introducción}
+\newpage
+\section{Desarrollo}
+\subsection{Extracción y manejo  de datos}
+\par En esta sección nos enfocaremos en la extracción de los datos y en el preprocesamiento. Cabe destacar que esta es una de las partes más importantes de la tarea ya que el volumen de datos lo suficientemente grande como para no realizar reducciones previas. 
+
+\subsubsection{Extracción de los datos}
+\par Como se trabajó en \texttt{Google Colab}, para la lectura y extracción de datos se utilizó la siguiente función:
+
+\begin{python}
+from google.colab import files
+uploaded = files.upload() #elegimos el archivo en el directorio correcto
+
+!unzip EMG_data_for_gestures-master.zip #descomprimimos
+\end{python}
+
+Luego, para la lectura de los archivos \texttt{.zip} se utilizó la librería \texttt{glob}. El código a continuación muestra como se utilizó:
+
+\begin{python}
+archivos = glob.glob('**/*.txt', recursive=True)
+\end{python}
+
+El resultado \texttt{archivos} es una lista que contiene todas las direcciones de los archivos \texttt{.txt} que había en el directorio actual. Es decir, todos los datos más el archivo \texttt{README.txt}. A partir de \texttt{archivos} se crean dos listas: \texttt{archivos\_test} y \texttt{archivos\_train} que contienen las direcciones de los \texttt{.txt} de los conjuntos de entrenamiento y prueba (que corresponde a los últimos 8 sujetos, según se pide en el enunciado). 
+\par Para extraer los datos de los archivos \texttt{.txt} se utilizó \texttt{pandas}. De esta forma, se obtuvieron los conjuntos de entrenamiento y de prueba:
+
+\begin{python}
+data_test = [pd.read_csv(fp,sep='\t') for fp in archivos_test]
+data_train = [pd.read_csv(fp,sep='\t') for fp in archivos_train]
+
+#Concatenamos las listas de dataFrames obtenidos:
+datos_train = pd.concat(data_train)
+datos_test = pd.concat(data_test)
+\end{python}
+
+Con esto ya tenemos a disposición el conjunto de entrenamiento y el de prueba.  continuación, se procedió al preprocesamiento y filtrado de los datos.
+
+\subsubsection{Preprocesamiento}
+Para comenzar el prerpocesamiento, se eliminaron los datos con etiqueta `7', según se especificó en el enunciado. Por otro lado, dado que la clasificación/detección debe ser según los datos obtenidos de los sensores y no según el momento en que se realizaron (los gestos se realizan de forma secuencial: primero un gesto, luego pausa, luego otro gesto y así...), se eliminó la columna `time' del \textit{dataset}. 
+\par Por otro lado, es importante destacar que la cantidad de datos y la no evidente relación entre estos y la clase obliga a aplicar procesamientos a éstos. A continuación se muestra lo obtenido en el canal 1:
+
+
+\par En la imagen, no se puede distinguir un nivel característico para cada clase (tal vez con excepción de las pausas). 
+
+\par Ya realizados estos pasos previos, se procedió al tratamiento de ventanas de los datos. Esto consiste en separar los datos en conjuntos (ventanas) de ancho definidas por el usuario. Además luego de crear una ventana, habrá un salto de cierta cantidad de datos. Se implementó la siguiente función para esto:
+
+\begin{python}
+def getVentanas(datos,ancho,salto):
+  ventanas = []
+  for i in range(int(len(datos)/(ancho + salto))):
+    k = i*(ancho + salto)
+    k_final = (i+1)*ancho + i*salto
+    ventanas.append(datos[k:k_final,:])
+  return ventanas
+\end{python}
+
+A priori, no se puede saber cual es la cantidad óptima de datos por ventanas ni el tamaño de los saltos. Por otro lado, por la forma de la construcción de las ventanas, estas pueden tener múltiples etiquetas o, en el caso de la última ventana, esta puede no tener el ancho requerido por el usuario. Para eliminar estas ventanas, se implementó una función \texttt{filtrarVentanas}:
+
+\begin{python}
+def filtrarVentanas(ventanas,ancho):
+  i=0
+  while i<len(ventanas):
+  #for i in range(len(ventanas)):
+    if len(ventanas[i]) != ancho:
+      del ventanas[i]
+    if not(all(x == list(ventanas[i][:,8])[0] for x in list(ventanas[i][:,8]))):
+      del ventanas[i]
+    i+=1
+  return ventanas
+\end{python}
+
+Con esto, obtenemos nuestro conjunto de entrenamiento. Las ventanas luego serán procesadas para extraer características según el \textit{paper} en \cite{paper1}. Por cada canal en una ventana  \textit{k}, se extrajo 9 características: 
+\begin{multicols}{3}
+    \begin{itemize}
+        \item Promedio
+        \item Varianza
+        \item Máximo 
+        \item Mínimo
+        \item Rango
+        \item Cruces por cero
+        \item RMS
+        \item Skewness
+        \item Kurtosis
+    \end{itemize}
+\end{multicols}
+
+Para realizar esto, se implementó una función \texttt{getChar}. Ésta recibe el arreglo de ventanas y entrega un arreglo con las características de cada canal para cada ventana:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{} & \textbf{CH1}          & \textbf{CH2}          & \textbf{$\cdots$} & \textbf{CH8} \\ \hline
+1                 & [m,v,...] & [m,v,...] &        &   [m,v,...]  \\ \hline
+2                 &              &              &        &     \\ \hline
+3                 &              &              &      &     \\ \hline
+$\vdots$            &              &              &   $\ddots$     &     \\ \hline
+n         &              &              &        &     \\ \hline
+\end{tabular}
+\caption{Forma de la matriz de características.}
+\label{tab:matcar}
+\end{table}
+
+
+\newpage
+\section{Resultados}
+\subsection{Clasificador de gestos}
+\subsubsection*{Entrenamiento:}
+\subsubsection{Redes neuronales}
+\par A continuación se muestran los resultados obtenidos con una red neuronal.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\textbf{Ancho} & \textbf{Salto} & \textbf{\# car} &\textbf{\#N. C. Oculta} & \textbf{Accuracy} & \textbf{Train time [s]}  \\ \hline
+200     & 10 &  48     & 30     & 0.64 & 226   \\ \hline
+200     & 10   & 24    & 30  & 0.61   & 1836  \\ \hline
+200     & 100   & 24    & 23  & 0.50   & 1247  \\ \hline
+200     & 100   & 48    & 23  & 0.67   & 1883  \\ \hline
+250     & 100   & 48    & 15  & 0.64   & 860  \\ \hline
+250     & 100   & 20    & 10  & 0.67   & 2141  \\ \hline
+\end{tabular}
+\caption{Resultados obtenidos con una red neuronal}
+\label{tab:rnn}
+\end{table}
+
+\subsubsection{Random Forest}
+\par Otro método de clasificación que se implementó es \texttt{Random Forest.} Los resultados obtenidos se muestran a continuación:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Ancho} & \textbf{Salto} & \textbf{\# car} &\textbf{\# estimadores} & \textbf{Accuracy}   \\ \hline
+200     & 10 &  24     & 1000     & 0.56   \\ \hline
+200     & 100   & 24    & 1000  & 0.54   \\ \hline
+200     & 100   & 48    & 300  & 0.66   \\ \hline
+250     & 100   & 48    & 300  & 0.60   \\ \hline
+200     & 100   & 20    & 300  & 0.63   \\ \hline
+200     & 100   & all    & 300  & 0.65   \\ \hline
+\end{tabular}
+\caption{Resultados para el clasificador con Random Forest}
+\label{tab:rf}
+\end{table}
+
+\subsubsection*{Prueba:}
+\par Para evaluar el conjunto de prueba se utilizó el mejor resultado obtenido de Random Forest. Esto debido a mayor simplicidad para evaluar y porque tiene menor tiempo de entrenamiento (utilizando random forest se tienen tiempos de a lo más 20 segundos):
+
+\begin{equation*}
+    Accuracy = 0.51
+\end{equation*}
+
+
+
+\subsection{Detector de gestos}
+\subsubsection*{Entrenamiento:}
+\par Previo a implementar el detector de gestos, se procedió a reescribir las etiquetas para que sólo existan dos clases: `0' (pausa) o `1' (gesto):
+\begin{python}
+label_bin_train = [0 if y_train[i] == 0 else 1 for i in range(len(y_train))]
+\end{python}
+
+\par Se implementó el clasificador usando SVM. Esto debido a que por naturaleza, SVM es bueno para un clasificador binario. Al igual que para el clasificador de gestos se variaron distintos parámetros hasta obtener el mejor detector:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Ancho} & \textbf{Salto} & \textbf{\# car} &\textbf{Kernel} & \textbf{Accuracy}   \\ \hline
+250     & 100 &  15     & Lineal     & 0.66   \\ \hline
+250     & 100   & 48    & rbf  & 0.70   \\ \hline
+250     & 100   & 48    & sigmoidal  & 0.32   \\ \hline
+250     & 100   & `all'    & rbf  & 0.71   \\ \hline
+\end{tabular}
+\caption{Resultados para el detector con SVM}
+\label{tab:svm}
+\end{table}
+
+\subsubsection*{Prueba}
+\par Dado los resultados obtenidos con SVM con kernel `rbf' y utilizando todas las características, se procedió a utilizar el conjunto de prueba correspondiente a los 8 últimos sujetos que se separaron del dataset al inicio del experimento. Los resultados obtenidos se muestran a continuación:
+\begin{equation*}
+    \begin{bmatrix}
+        1185 & 472\\ 
+        235 & 261
+    \end{bmatrix}    
+\end{equation*}
+
+
+\par La \textit{accuracy} obtenida es 0.66. Cabe destacar que el tiempo de entrenamiento con kernel rbf era dos o tres veces superior al kernel lineal. 
+
+
+\newpage
+\section{Análisis de resultados}
+\par A pesar de realizar variedad de experimentos con distintos ancho de ventana, distinto salto, variando también la cantidad de características y distintos aspectos de la red neuronal, los resultados obtenidos son pésimos. Además los tiempos de entrenamiento son altísimos (1800 [s] equivalen a 30 minutos). Por otro lado, aunque no es posible d verificar en la tabla \ref{tab:rnn}, la puntuación obtenida en \textit{accuracy} usualmente no variaba durante el entrenamiento. Esto es, entre la \textit{Epoch 001} y la \textit{Epoch 101}, no había diferencia en la \textit{accuracy}. Esta situación se repitió en varios experimentos. 
+
+\par Tomando en cuenta lo anterior, se procedió a probar distintas combinaciones de RandomForest que a pesar de no obtener resultados mejores a la red neuronal el tiempo de entrenamiento era dos ordenes de magnitud menor. De esta forma, al evaluar en el conjunto de prueba los resultados obtenidos fueron cercanos a lo que se obtendría lanzando monedas. Esto se debe en primer lugar a la gran cantidad de clase 0 que hay en los datos. 
+
+\par Sobre el detector se puede decir que los resultados son mejores de los esperados. Esto tomando en cuenta que en las presentaciones de  compañeros los resultados obtenidos eran equivalentes a lanzar monedas.
+
+
+
+
+
+
+\newpage
+\begin{thebibliography}{X}
+    \bibitem{paper1} Macro-Class Selection for Hierarchical K-NN Classification of inertial sensor data. \\
+    \url{https://www.crcv.ucf.edu/papers/PECCS_2012.pdf} 
+
+\end{thebibliography}
+
+\section{Anexos}
+\subsection*{Ejemplo entrenamiento red neuronal}
+\begin{multicols}{2}
+[ Red Nhidden= 23, 24 FEATURES, ANCHO = 200 SALTO = 100 CON CLASE 0
+]
+Epoch: 0001 \\
+Accuracy validation: 0.507657\\
+Epoch: 0101\\
+Accuracy validation: 0.507657\\
+Epoch: 0201\\
+Accuracy validation: 0.507657\\
+Epoch: 0301 \\
+Accuracy validation: 0.507657 \\
+Epoch: 0401 \\
+Accuracy validation: 0.507657 \\
+Epoch: 0501 \\
+Accuracy validation: 0.507657 \\ 
+Epoch: 0601 \\
+Accuracy validation: 0.507657 \\
+Epoch: 0701 \\
+Accuracy validation: 0.507657 \\
+Epoch: 0801 \\
+Accuracy validation: 0.507657 \\
+Epoch: 0901 \\ 
+Accuracy validation: 0.507657 \\
+Epoch: 1001 \\ 
+Accuracy validation: 0.507657 \\
+Epoch: 1101 \\
+Accuracy validation: 0.507657 \\
+Epoch: 1201 \\
+Accuracy validation: 0.507657 \\
+Epoch: 1301 \\
+Accuracy validation: 0.507657 \\ 
+Epoch: 1401 \\
+Accuracy validation: 0.507657 \\
+Optimization Finished! \\ 
+Accuracy validation: 0.507657 \\
+Confusion matrix validation \\
+$\begin{bmatrix}
+663 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+84 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+97 & 0 & 0 & 0 & 0  & 0 & 0 \\ 
+117 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+114 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+115 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+116 & 0 & 0 & 0 & 0 & 0 & 0
+\end{bmatrix}$ \\
+Tiempo total de entrenamiento: 1247.6460301876068\\
+\end{multicols}
+
+\end{document}
