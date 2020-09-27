@@ -1,4 +1,69 @@
-\input{estilo/estilo.tex}
+%\input{estilo/estilo.tex}
+\documentclass[12pt, letterpaper]{article} 
+% report: Estilo Informe completo, con capítulos.
+% article: Estilo Informe básico, sin Capítulos.
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8x]{inputenc}
+\usepackage[activeacute,spanish,es-tabla]{babel} % Idioma español, con sus configuraciones
+\usepackage[left=2cm, right=2cm, bottom=3cm, top=3cm, headheight=40pt]{geometry} % Márgenes
+\usepackage{graphicx} % Required for including pictures
+\usepackage{float} % Allows putting an [H] in \begin{figure} to specify the exact location of the figure
+\usepackage{wrapfig} % Allows in-line images
+\usepackage[nottoc, notlot, notlof]{tocbibind} % Índices, sin ToC, LoF ni LoT
+\renewcommand{\refname}{Bibliografía} % Nombre para Bibliografía (clase article)
+%\renewcommand{\bibname}{Bibliografía} % Nombre para Bibliografía (clase book/report)
+\renewcommand\tocbibname{Bibliografía}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{siunitx} % Unidades del SI
+\sisetup{output-decimal-marker = {,}}
+\usepackage{cancel} % Permite cancelar (tachar) elementos
+\usepackage{tabu} % Tablas chéveres
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables for horizontal lines
+\usepackage{multirow} % Celdas en más de una fila
+\usepackage{multicol}
+\usepackage{easybmat} % Matrices por Bloques
+\usepackage{lipsum} % Lorem Ipsum
+
+
+\usepackage{color}
+\definecolor{gray51}{rgb}{0.51,0.51,0.51}
+\definecolor{gray71}{rgb}{0.71,0.71,0.71}
+\newcommand{\HRule}{\rule{\linewidth}{.4mm}}
+
+\usepackage{listings} % Incluye códigos
+\renewcommand{\lstlistingname}{Algoritmo}
+\renewcommand{\lstlistlistingname}{Índice de \lstlistingname s}
+\lstset{ 
+	basicstyle=\ttfamily\small,
+    commentstyle=\color{red},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{gray71},
+    stringstyle=\color{green},
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    xleftmargin=2em,
+    frame=single,
+    framexleftmargin=1.5em
+}
+
+\usepackage{hyperref} 		% Hipervínculos
+\hypersetup{
+	colorlinks	= true,		% Vínculos coloreados en vez de recuadros
+    urlcolor	= blue,		% Color para vínculos externos
+    linkcolor	= black,	% Color para vínculos internos
+    citecolor	= red		% Color para citas
+}
 
 \title{Informe tarea 1} % Nombre archivo en Overleaf
 \newcommand{\ramo}{EL7008-1 Procesamiento Avanzado de Imágenes}
@@ -74,8 +139,8 @@
 \begin{figure}[H]
   \centering
   \includegraphics[width = 0.5\textwidth]{conv2d.png}
-  \label{fig:conv2d}
   \caption{Convolucion en dos dimensiones con padding.\cite{imConv2d}}
+  \label{fig:conv2d}
 \end{figure}
 
 \par En la figura \ref{fig:conv2d} se observa una imagen de entrada (representada por la matriz de cuadrados azules) con 5 pixeles de ancho por 5 de largo. Adicionalmente, se agrega un pixel de ancho y uno de largo de color blanco. Éstos representan el \textit{padding}.El kernel por otro lado, se representa por los pixeles sombreados (kernel de 3x3).
@@ -202,8 +267,8 @@ El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace c
 \begin{figure}[H]
   \centering
   \includegraphics[width = 0.5\textwidth]{frutas_recons.png}  
-  \label{fig:frutasRec}
   \caption{Reconstrucción de la imagen de frutas a partir de la pirámide de Laplace de 3 niveles.}
+  \label{fig:frutasRec}
 \end{figure}
 
 
@@ -264,10 +329,16 @@ El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace c
   return output
 \end{lstlisting}
 
-\par La implementación en \ref{code:convCode}, corresponde a la convolución en dos dimensiones con padding. En el código, la sección más importante corresponde a los 4 ciclos de iteraciones anidados. Estos son los que recorren en primer lugar la imagen (\texttt{for r in rows} y luego \texttt{for c in columns}) y luego el \textit{kernel} guardando en la variable \texttt{sum} el resultado de operar para cada pixel \texttt{(r,c)} de la imagen, el resultado de la operación convolución. 
+\par La implementación en \ref{convCode}, corresponde a la convolución en dos dimensiones con padding. En el código, la sección más importante corresponde a los 4 ciclos de iteraciones anidados. Estos son los que recorren en primer lugar la imagen (\texttt{for r in rows} y luego \texttt{for c in columns}) y luego el \textit{kernel} guardando en la variable \texttt{sum} el resultado de operar para cada pixel \texttt{(r,c)} de la imagen, el resultado de la operación convolución. 
+\par A continuación se muestra un ejemplo de la ejecución de la función \texttt{convolution\_cython} con un \textit{kernel} de la siguiente forma:
 
-\par Es importante destacar que esta función se implementó en \textit{Cython} para intentar ganar eficiencia. Para verificar si era más rápida o no que una implementación de librerías, se comparó con la función \texttt{signal.convolve2d} de la librería \texttt{Scipy}. Para esto, se utilizó la herramienta de perfilamiento (\texttt{\%timeit}) de Python. Esta ejecuta cierta cantidad de veces la función pedida (100 veces en este caso) y entrega el mejor resultado obtenido. Adicionalmente, prueba (si hay disponible) en los distintos \textit{cores} del computador:
-
+\begin{equation}
+\begin{bmatrix}
+-1 & -1 & -1 \\ 
+-1 & 8 & -1 \\ 
+-1 & -1 & -1
+\end{bmatrix}
+\end{equation}
 
 \begin{table}[H]
   \centering
