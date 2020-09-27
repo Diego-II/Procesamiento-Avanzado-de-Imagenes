@@ -15,7 +15,6 @@
 \input{estilo/header.tex}
 \input{estilo/program-leng.tex}
 
-
 %\linespread{1.2} 				% Interlineado
 %\setlength\parindent{0pt} 		% Longitud sangría
 \usepackage{subcaption}
@@ -227,10 +226,10 @@ El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace c
 \section{Desarrollo}
 \subsection{Pirámide de \textit{Gauss}:}
 
-\subsubsection*{Convolución:}
+\subsubsection{Convolución:}
 \par A continuación, se presenta el código de la implementación de la convolución en \textit{Cython}:
 
-\begin{lstlisting}[language=Python, label = convCode, caption=Implementación de convolución en Cython.]
+\begin{lstlisting}[language=Python, label = code:convCode, caption=Implementación de convolución en Cython.]
   cpdef float[:, :] convolution_cython(float [:, :] input, float [:, :] mask):
   cdef int a, b, r, c, rows, cols, row_init, col_init, i, j,
   cdef float sum
@@ -265,8 +264,28 @@ El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace c
   return output
 \end{lstlisting}
 
-\par La implementación en \ref{convCode}, corresponde a la convolución en dos dimensiones con padding. En el código, la sección más importante corresponde a los 4 ciclos de iteraciones anidados. Estos son los que recorren en primer lugar la imagen (\texttt{for r in rows} y luego \texttt{for c in columns}) y luego el \textit{kernel} guardando en la variable \texttt{sum} el resultado de operar para cada pixel \texttt{(r,c)} de la imagen, el resultado de la operación convolución. 
+\par La implementación en \ref{code:convCode}, corresponde a la convolución en dos dimensiones con padding. En el código, la sección más importante corresponde a los 4 ciclos de iteraciones anidados. Estos son los que recorren en primer lugar la imagen (\texttt{for r in rows} y luego \texttt{for c in columns}) y luego el \textit{kernel} guardando en la variable \texttt{sum} el resultado de operar para cada pixel \texttt{(r,c)} de la imagen, el resultado de la operación convolución. 
 
+\par Es importante destacar que esta función se implementó en \textit{Cython} para intentar ganar eficiencia. Para verificar si era más rápida o no que una implementación de librerías, se comparó con la función \texttt{signal.convolve2d} de la librería \texttt{Scipy}. Para esto, se utilizó la herramienta de perfilamiento (\texttt{\%timeit}) de Python. Esta ejecuta cierta cantidad de veces la función pedida (100 veces en este caso) y entrega el mejor resultado obtenido. Adicionalmente, prueba (si hay disponible) en los distintos \textit{cores} del computador:
+
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|c|c|c|}
+  \hline
+                          & \textit{\textbf{Cython}} & \textit{\textbf{Scipy}} \\ \hline
+  \textbf{Timpo {[}ms{]}} & $18.2$                     & $6.11$                    \\ \hline
+  \end{tabular}
+  \label{table:profile}
+  \caption{Tiempos de ejecución de operación convolución.}
+\end{table}
+
+\par Se observa en la tabla \ref{table:profile} que la función del módulo \textit{scipy} es tres veces mas rápida. De todas formas, se continuará utilizando la función implementada en \textit{cython}, siguiendo las instrucciones del enunciado.
+
+\par A continuación, se muestra la imagen de salida al ejecutar lo siguiente:
+\begin{lstlisting}[language=Python, label = code:convCodeejec, caption=Implementación de convolución en Cython.]
+  Holoquetal = 
+\end{lstlisting}
 
 \bigskip
 - Describir implementación de convolución, incluyendo código
