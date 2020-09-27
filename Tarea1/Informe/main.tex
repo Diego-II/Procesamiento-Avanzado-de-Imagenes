@@ -18,7 +18,7 @@
 
 %\linespread{1.2} 				% Interlineado
 %\setlength\parindent{0pt} 		% Longitud sangría
-
+\usepackage{subcaption}
 \begin{document}
 %----------------------------------------------------------------------
 %	Portada
@@ -75,11 +75,11 @@
 \begin{figure}[H]
   \centering
   \includegraphics[width = 0.5\textwidth]{conv2d.png}
-  \label{conv2d}
+  \label{fig:conv2d}
   \caption{Convolucion en dos dimensiones con padding.\cite{imConv2d}}
 \end{figure}
 
-\par En la figura se observa una imagen de entrada (representada por la matriz de cuadrados azules) con 5 pixeles de ancho por 5 de largo. Adicionalmente, se agrega un pixel de ancho y uno de largo de color blanco. Éstos representan el \textit{padding}.El kernel por otro lado, se representa por los pixeles sombreados (kernel de 3x3).
+\par En la figura \ref{fig:conv2d} se observa una imagen de entrada (representada por la matriz de cuadrados azules) con 5 pixeles de ancho por 5 de largo. Adicionalmente, se agrega un pixel de ancho y uno de largo de color blanco. Éstos representan el \textit{padding}.El kernel por otro lado, se representa por los pixeles sombreados (kernel de 3x3).
 
 \par Para el cálculo de la imagen de salida, se utiliza la siguiente ecuación:
 
@@ -92,14 +92,135 @@
 
 \par En el ejemplo de la figura, se realiza \textit{padding}. Esto consiste en agrandar la imagen de entrada para que la salida sea de la misma dimension. En esta ocación, se realizará padding con ceros, es decir, se rellenará con ceros donde sea necesario.
 
-\subsection{Pirámides:} 
-\par Como se menciono anteriormente, las pirámides corresponden a representaciones multi-resolución calculadas a partir de imágenes. En éstas, la señal o imagen de entrada es filtrada y submuestreada tantas veces como niveles se quieran.   http://persci.mit.edu/pub_pdfs/RCA84.pdf
+\subsection{Pirámides}
+Como se menciono anteriormente, las pirámides corresponden a representaciones multi-resolución calculadas a partir de imágenes. En éstas, la señal o imagen de entrada es filtrada y submuestreada tantas veces como niveles se quieran.
 
-\bigskip  
+
+\par Inicialmente, las pirámides se utilizaron para la detección e identificación de objetos que pueden o no aparecer a distintas escalas. La idea, es crear distintas copias del objeto cambiando el tamaño (o escala) y resolución de estos. En la figura \ref{fig:pyramidPaper} se observan distintas resoluciones del mismo objeto para obtener otras representaciones.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width = 0.7\textwidth]{pyramid_paper.png}
+  \caption{Distintas formas de utilizar las pirámides. En (a), copias del objeto a detectar se escalan. En (b), la imagen se trabaja completa. \cite{paperPyramids}}
+  \label{fig:pyramidPaper}
+\end{figure}
+
+
+\subsubsection{Piramide de Gauss}
+La pirámide de gauss corresponde a un caso particular de las pirámides en las que el filtro aplicado es uno pasabajo, con semejanzas a un filtro con distribución \textit{gaussiana}. 
+
+\par En estos, se aplica un filtro \textit{gaussiano} a cada imagen y luego se sub-muestrea. El filtro  \textit{gaussiano} también se conoce como \textit{blur} y recibe como parámetro la desviación estándar a partir de la cual se originará el filtro. En la siguiente figura, se observa el efecto de variar la desviación estándar usada para el cálculo del filtro:
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.32\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{frutas.png}
+    \caption{Imagen original (en blanco y negro).}
+  \end{subfigure}
+  ~
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.9\textwidth]{frutas_std5.png}
+      \caption{Imagen con filtro \textit{blur} aplicado con $\sigma=5$.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.9\textwidth]{frutas_std10.png}
+      \caption{Imagen con filtro \textit{blur} aplicado con $\sigma=10$.}
+  \end{subfigure}
+  \caption{Misma imagen con distintos filtros \textit{blur} aplicados (distinto $\sigma$ mismo tamaño de kernel, 10). }
+  \label{fig:frutas}
+\end{figure}
+
+\par En la figura se observa el efecto de aumentar $\sigma$. Por otro lado, en los bordes de las figuras \ref{fig:frutas} (a) y (b), se observan los bordes negros que corresponden al \textit{padding} mencionado anteriormente. 
+
+
+\subsubsection{Piramide de Laplace}
+Estas pirámides se construyen con la información perdida en la pirámide de Gauss. Para esto, se resta el nivel actual de la pirámide de Gauss con el siguiente (antes del sub-muestreo). El último nivel de la pirámide de Laplace corresponde al último nivel de la pirámide de gauss.
+
+\bigskip
+\par En las figuras \ref{fig:gp3frutas} y \ref{fig:lp3frutas}, se muestran 3 niveles de la piramide de gauss y laplace respectivamente. Éstas fueron generadas a partir de la implementación de la tarea:
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.32\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{piramides/gp1.png}
+    \caption{Nivel 1.}
+  \end{subfigure}
+  ~
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{piramides/gp2.png}
+      \caption{Nivel 2.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.22\textwidth]{piramides/gp3.png}
+      \caption{Nivel 3.}
+  \end{subfigure}
+  \caption{Pirámide de Gauss de 3 niveles.}
+  \label{fig:gp3frutas}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.32\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{piramides/lp1.png}
+    \caption{Nivel 1.}
+  \end{subfigure}
+  ~
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{piramides/lp2.png}
+      \caption{Nivel 2.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.22\textwidth]{piramides/lp3.png}
+      \caption{Nivel 3.}
+  \end{subfigure}
+  \caption{Pirámide de Laplace de 3 niveles.}
+  \label{fig:lp3frutas}
+\end{figure}
+
+
+\subsection{Reconstrucción de la imagen original}
+El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace consiste en, a partir del nivel más profundo de la pirámide repetir lo siguiente:
+\begin{enumerate}
+  \item Duplicar el tamaño de la imagen.
+  \item Sumar la imagen duplicada con el siguiente piso de la pirámide de Laplace. 
+\end{enumerate}
+
+\par Para duplicar el tamaño de la imagen, se utiliza interpolación. Es importante destacar que, la imagen reconstruida contiene ciertos artefactos en particular en los bordes. Esto se debe a que al hacer padding (basicamente rellenar con ceros), se pierde información de la imagen original: 
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width = 0.5\textwidth]{frutas_recons.png}  
+  \label{fig:frutasRec}
+  \caption{Reconstrucción de la imagen de frutas a partir de la pirámide de Laplace de 3 niveles.}
+\end{figure}
+
+
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\par En la siguiente sección, se encuentra la implementación de todo lo descrito.  Por cada ítem, se muestra el código, explicación breve donde sea necesario y una prueba de la función implementada o el resultado que arroja esta. 
+ 
+% \bigskip  
 % \par Describir operación de convolución
-\par Describir brevemente cálculo de la pirámide de Gauss
-\par Describir brevemente cálculo de la pirámide de Laplace
-\par Describir brevemente reconstrucción de la imagen original
+% \par Describir brevemente cálculo de la pirámide de Gauss
+% \par Describir brevemente cálculo de la pirámide de Laplace
+% \par Describir brevemente reconstrucción de la imagen original
 
 
 \newpage
@@ -189,6 +310,9 @@ imágenes entregadas, incluir las imágenes reconstruidas en el informe
 
     \bibitem{imConv2d} Towards Data Science: Intuitively Understanding Convolutions for Deep Learning. By Irhum Shafkat. \\
     \url{https://towardsdatascience.com/intuitively-understanding-convolutions-for-deep-learning-1f6f42faee1} 
+
+    \bibitem{paperPyramids} Pyramid methods in image processing. E. H. Adelson, C. H. Anderson,  J. R. Bergen,  P. J. Burt,  J. M. Ogden. $[1984]$
+    \url{http://persci.mit.edu/pub_pdfs/RCA84.pdf}
 
 \end{thebibliography}
 
