@@ -5,7 +5,7 @@
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8x]{inputenc}
-\usepackage[activeacute,spanish,es-tabla]{babel} % Idioma español, con sus configuraciones
+\usepackage[activeacute,spanish,es-nodecimaldot,es-tabla]{babel} % Idioma español, con sus configuraciones
 \usepackage[left=2cm, right=2cm, bottom=3cm, top=3cm, headheight=40pt]{geometry} % Márgenes
 \usepackage{graphicx} % Required for including pictures
 \usepackage{float} % Allows putting an [H] in \begin{figure} to specify the exact location of the figure
@@ -17,8 +17,8 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
-\usepackage{siunitx} % Unidades del SI
-\sisetup{output-decimal-marker = {,}}
+%\usepackage{siunitx} % Unidades del SI
+%\sisetup{output-decimal-marker = {.}}
 \usepackage{cancel} % Permite cancelar (tachar) elementos
 \usepackage{tabu} % Tablas chéveres
 \usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables for horizontal lines
@@ -271,13 +271,8 @@ El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace c
   \label{fig:frutasRec}
 \end{figure}
 
-
-\bigskip
-\bigskip
-\bigskip
-\bigskip
-\bigskip
-\bigskip
+\vspace{7cm}
+\hrulefill
 \par En la siguiente sección, se encuentra la implementación de todo lo descrito.  Por cada ítem, se muestra el código, explicación breve donde sea necesario y una prueba de la función implementada o el resultado que arroja esta. 
  
 % \bigskip  
@@ -289,12 +284,12 @@ El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace c
 
 \newpage
 \section{Desarrollo}
-\subsection{Pirámide de \textit{Gauss}:}
+\subsection{Pirámide de \textit{Gauss}}
 
-\subsubsection{Convolución:}
+\subsubsection{Convolución}
 \par A continuación, se presenta el código de la implementación de la convolución en \textit{Cython}:
 
-\begin{lstlisting}[language=Python, label = code:convCode, caption=Implementación de convolución en Cython.]
+\begin{lstlisting}[language=Python, label = convCode, caption=Implementación de convolución en Cython.]
   cpdef float[:, :] convolution_cython(float [:, :] input, float [:, :] mask):
   cdef int a, b, r, c, rows, cols, row_init, col_init, i, j,
   cdef float sum
@@ -330,6 +325,24 @@ El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace c
 \end{lstlisting}
 
 \par La implementación en \ref{convCode}, corresponde a la convolución en dos dimensiones con padding. En el código, la sección más importante corresponde a los 4 ciclos de iteraciones anidados. Estos son los que recorren en primer lugar la imagen (\texttt{for r in rows} y luego \texttt{for c in columns}) y luego el \textit{kernel} guardando en la variable \texttt{sum} el resultado de operar para cada pixel \texttt{(r,c)} de la imagen, el resultado de la operación convolución. 
+
+
+\par Para comparar la eficiencia de la función \texttt{convolution\_cython}, se comparó contra una implementada en el módulo \textit{scipy}. Para esto, se utilizó el comando \texttt{\%timeit}. Éste ejecuta una linea cierta cantidad de veces (100 en este caso) y guarda el mejor tiempo obtenido. Adicionalmente, utiliza distintos \textit{cores} para verificar que sea el mejor resultado: 
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|c|c|c|}
+  \hline
+                          & \textit{\textbf{Cython}} & \textit{\textbf{Scipy}} \\ \hline
+  \textbf{Timpo {[}ms{]}} & $18.2$                     & $6.11$                    \\ \hline
+  \end{tabular}
+  \caption{Tiempos de ejecución de operación convolución.}
+  \label{profile}
+\end{table}
+
+\par Se observa en la tabla \ref{profile} que la función del módulo \textit{scipy} es tres veces mas rápida. De todas formas, se continuará utilizando la función implementada en \textit{cython}, siguiendo las instrucciones del enunciado.
+
+
 \par A continuación se muestra un ejemplo de la ejecución de la función \texttt{convolution\_cython} con un \textit{kernel} de la siguiente forma:
 
 \begin{equation}
@@ -340,27 +353,100 @@ El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace c
 \end{bmatrix}
 \end{equation}
 
-\begin{table}[H]
+\begin{figure}[H]
   \centering
-  \begin{tabular}{|c|c|c|}
-  \hline
-                          & \textit{\textbf{Cython}} & \textit{\textbf{Scipy}} \\ \hline
-  \textbf{Timpo {[}ms{]}} & $18.2$                     & $6.11$                    \\ \hline
-  \end{tabular}
-  \label{table:profile}
-  \caption{Tiempos de ejecución de operación convolución.}
-\end{table}
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{techo.png}
+    \caption{Imagen original.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.45\textwidth}
+      \centering
+      \includegraphics[width = 0.9\textwidth]{conv/techoconv.png}
+      \caption{Imagen obtenida.}
+  \end{subfigure}
+  \caption{Salida obtenida al usar la función \textit{convolution\_cython}.}
+  \label{convcython}
+\end{figure}
 
-\par Se observa en la tabla \ref{table:profile} que la función del módulo \textit{scipy} es tres veces mas rápida. De todas formas, se continuará utilizando la función implementada en \textit{cython}, siguiendo las instrucciones del enunciado.
+\subsubsection{Cálculo de máscaras}
 
-\par A continuación, se muestra la imagen de salida al ejecutar lo siguiente:
-\begin{lstlisting}[language=Python, label = code:convCodeejec, caption=Implementación de convolución en Cython.]
-  Holoquetal = 
+\begin{lstlisting}[language=Python, label = maskCode, caption=Cálculo de las máscaras en Python.]
+def compute_gauss_horiz(sigma, width):
+	mask = np.zeros([1, width], np.float32)
+
+	
+	coef = 1 / (sigma * np.sqrt(2 * np.pi))
+ 
+	for i in range(width):
+		mask[0][i] = coef * np.exp(- np.square(i - width//2) / (2 * sigma*sigma) )
+		# Para debuggear
+		#print((i - width//2))
+	
+	# normalizamos
+  return mask / mask.sum()
+  
+def compute_gauss_vert(sigma, height):
+	mask = np.zeros((height, 1), np.float32)
+	# no es necesario implementar nuevamente la exponencial, solo trasponer el resultado
+	# de la funcion comute_gauss_horiz
+	hor_mask = compute_gauss_horiz(sigma = sigma, width = height)
+	for i in range(height):
+		mask[i][0] = hor_mask[0][i]
+	return mask
 \end{lstlisting}
 
-\bigskip
-- Describir implementación de convolución, incluyendo código
-- Describir implementación de cálculo de máscaras, incluyendo código
+\par Para el cálculo de los coeficientes del \textit{kernel}, se utilizó la siguiente ecuación:
+
+\begin{equation}
+  G(x,\sigma) \: = \: \frac{1}{\sigma \sqrt{2 \: \pi}} \exp(\tfrac{-x^2}{2 \sigma^2})
+  \label{eqn:distGauss}
+\end{equation}
+
+\par Para que el cálculo sea correcto, se debe hacer un cambio de variable. Si el kernel es de una dimensión y de largo $n$, es de la forma:
+
+\begin{equation}
+  g(x) \: = \: [g_0,\: g_1,\:g_x,\: ...,\: g_n] , \: \: \: \: \: \:  \forall x \: \in \: [0,n]
+\end{equation}
+
+Pero la ecuación \ref{eqn:distGauss}, toma cada valor de $x$ con el centro del \textit{kernel} como referencia. Para resolver esto, en el código se hace el siguiente cambio de variables:
+
+\begin{equation}
+  x \: = \: i \: - \: n//2
+\end{equation}
+
+De esta forma, al recorrer desde $[0,n]$, se obtiene el valor correcto. El último paso para obtener el kernel es normalizar. A continuación, se muestra el resultado obtenido del cálculo de una máscara de una dimensión con $\sigma \: = \: 1$ y largo 3:
+
+
+\begin{equation*}
+  mask_{horizontal} \: = \: [[\: 0.27406862 ,\: 0.45186278 ,\: 0.27406862 \:]]
+\end{equation*}
+
+\par Para el cálculo de la máscara vertical, se obtiene una máscara horizontal y se transpone. El resultado entregado por la función \textit{compute\_gauss\_vert} con los mismos parámetros anteriores son:
+
+\begin{equation*}
+  mask_{vertical} \: = \: [[0.27406862],\: [0.45186278],\: [0.27406862]]
+\end{equation*}
+
+\subsubsection{Suavizado de imágenes}
+\begin{lstlisting}[language=Python, label = blurCode, caption=Suavizado de imágenes.]
+def do_blur(input, sigma, height):
+	# Obtenemos las mascaras:
+	hor_mask = compute_gauss_horiz(sigma, height)
+	vert_mask = compute_gauss_vert(sigma, height)
+	# Convolucion entre la imagen de entrada "input" y la mascara horizontal
+	output = np.float32(convolution_cython(input, hor_mask))
+
+	# Calcular convolucion entre la imagen resultante y la mascara vertical
+	result = np.float32(convolution_cython(output, vert_mask) )
+
+	return result
+\end{lstlisting}
+
+\newpage
+%- Describir implementación de convolución, incluyendo código
+%- Describir implementación de cálculo de máscaras, incluyendo código
 - Describir implementación de suavizado de imágenes, incluyendo código
 - Describir implementación de submuestreo, incluyendo código
 - Describir implementación de pirámide de Gauss, incluyendo código
