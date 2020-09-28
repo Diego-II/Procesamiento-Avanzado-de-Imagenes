@@ -334,16 +334,16 @@ El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace c
   \begin{tabular}{|c|c|c|}
   \hline
                           & \textit{\textbf{Cython}} & \textit{\textbf{Scipy}} \\ \hline
-  \textbf{Timpo {[}ms{]}} & $18.2$                     & $6.11$                    \\ \hline
+  \textbf{Timpo {[}ms{]}} & $15.8$                     & $3.08$                    \\ \hline
   \end{tabular}
   \caption{Tiempos de ejecución de operación convolución.}
   \label{profile}
 \end{table}
 
-\par Se observa en la tabla \ref{profile} que la función del módulo \textit{scipy} es tres veces mas rápida. De todas formas, se continuará utilizando la función implementada en \textit{cython}, siguiendo las instrucciones del enunciado.
+\par Se observa en la tabla \ref{profile} que la función del módulo \textit{scipy} es varias veces mas rápida (puede variar cuánto más rapida es). De todas formas, se continuará utilizando la función implementada en \textit{cython}, siguiendo las instrucciones del enunciado.
 
 
-\par A continuación se muestra un ejemplo de la ejecución de la función \texttt{convolution\_cython} con un \textit{kernel} de la siguiente forma:
+\par A continuación se muestra un ejemplo de la ejecución de la función \texttt{convolution\_cython} con un \textit{kernel} de la siguiente forma (es un \textit{kernel} util para la detección de bordes):
 
 \begin{equation}
 \begin{bmatrix}
@@ -444,10 +444,32 @@ def do_blur(input, sigma, height):
 	return result
 \end{lstlisting}
 
+\par El suavizado de imágenes consiste en concatenar filtros: primero se aplica el filtro horizontal y luego el vertical. De esta forma se obtiene el suavizado (o \textit{blur}), que corresponde a un filtro pasabajo. 
+
+\par En la figura X, se muestra el resultado de aplicar \textit{blur} a la imagen del techo:
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{techo.png}
+    \caption{Imagen original.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.45\textwidth}
+      \centering
+      \includegraphics[width = 0.9\textwidth]{conv/techoblur.png}
+      \caption{Imagen obtenida.}
+  \end{subfigure}
+  \caption{Salida obtenida al usar la función \textit{do\_blur}.}
+  \label{blur}
+\end{figure}
+
+
 \newpage
 %- Describir implementación de convolución, incluyendo código
 %- Describir implementación de cálculo de máscaras, incluyendo código
-- Describir implementación de suavizado de imágenes, incluyendo código
+% - Describir implementación de suavizado de imágenes, incluyendo código
 - Describir implementación de submuestreo, incluyendo código
 - Describir implementación de pirámide de Gauss, incluyendo código
 - Describir implementación: graficar pirámide de Gauss, incluyendo código
