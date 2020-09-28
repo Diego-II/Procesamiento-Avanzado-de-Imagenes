@@ -799,7 +799,7 @@ def show_laplace_pyramid(pyramid):
 
 \par En esta función cada imagen, excepto la última, debe ser escalada antes de mostrarse. Para esto, se agrega el \texttt{if} en la línea 10. 
 
-\subsection{Resultados pirámide de Laplace}
+\subsubsection{Resultados pirámide de Laplace}
 A continuación, se muestran los resultados obtenidos de aplicar el cálculo de las pirámides de Laplace a las 4 imágenes con los parámetros solicitados:
 
 \par \textbf{Frutas:}
@@ -951,15 +951,21 @@ A continuación, se muestran los resultados obtenidos de aplicar el cálculo de 
 \end{figure}
 
 
+\subsection{Analisis pirámide de Laplace}
+A diferencia de la pirámide de Gauss, en este caso la imagen de entrada afecta notablemente los resultados obtenidos. Esto se nota claramente en particular en la figura \ref{lppoligono}. Se observa que los bordes detectados, a medida que se aumenta el nivel de la pirámide, se observa de peor forma. 
+
+\par Se observa además que, debido al \textit{padding} realizado en la convolución y a que esta pirámide es un filtro para detección de bordes (entre otros),  los resultados se ven más afectados que en la pirámide de Gauss. 
+
+\par Es importante destacar que, dentro de las aplicaciones de las pirámides, ésta es en particular útil porque permite comprimir el espacio que ocupa una imagen en memoria. Esto no es evidente debido a que a partir de una imagen se generan 5. Pero es fácil observar también que gran parte de los bits o píxeles serán cercanos a cero. Por esto, puede resultar más compacto en temas de memoria para almacenar una imagen.
 
 \newpage
 % - Describir implementación de resta de imágenes, incluyendo código
 % - Describir implementación de pirámide de Laplace, incluyendo código
 % - Describir implementación de valor absoluto y escalamiento, incluyendo código
 % - Describir implementación: graficar pirámide de Laplace, incluyendo código
-- Prueba del sistema de cálculo de pirámide de Laplace sobre 4 imágenes entregadas, incluir las
-imágenes de las pirámides resultantes en el informe
-- Análisis del desempeño del cálculo de la pirámide de Laplace, analizando las imágenes resultantes
+% - Prueba del sistema de cálculo de pirámide de Laplace sobre 4 imágenes entregadas, incluir las
+% imágenes de las pirámides resultantes en el informe
+% - Análisis del desempeño del cálculo de la pirámide de Laplace, analizando las imágenes resultantes
 
 
 \subsection{Reconstrucción imagen}
