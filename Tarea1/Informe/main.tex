@@ -118,7 +118,7 @@
 
 \par El informe comienza con el marco teórico donde se expone brevemente sobre la convolución, la pirámide de Gauss, la pirámide de Laplace y la reconstrucción de la imagen. 
 
-\par A continuación, la sección desarollo se divide en tres sub-secciones:
+\par A continuación, la sección desarrollo se divide en tres sub-secciones:
 \begin{enumerate}
   \item Pirámide de Gauss.
   \item Pirámide de Laplace.
@@ -131,7 +131,7 @@
 
 \newpage
 \section{Marco Teórico}
-\subsection{Cnvolución}
+\subsection{Convolución}
 
 \par En matemáticas, la convolución es una operación que recibe dos funciones ($f$ y $g$) y entrega una tercera función ($f \: \ast \: g $) que describe como la forma de una es influida por la otra \cite{WikiConv}.
 \par En procesamiento de señales, se puede entender como afecta se ve afectada señal  pasar por un filtro. En este caso, la señal corresponde a una imagen y el filtro será otra imagen (le llamaremos indistintamente \textit{kernel}, \textit{mask} o máscara). A continuación, se muestra una ilustración que se utilizará para explicar la operación convolución en dos dimensiones:
@@ -154,10 +154,10 @@
 
 \par En la ecuación \ref{eqn:conv2d}, la imagen de salida (y), se construye con la operación del kernel (h) sobre todos los pixeles de la imagen de entrada (x) y los vecinos correspondientes.
 
-\par En el ejemplo de la figura, se realiza \textit{padding}. Esto consiste en agrandar la imagen de entrada para que la salida sea de la misma dimension. En esta ocación, se realizará padding con ceros, es decir, se rellenará con ceros donde sea necesario.
+\par En el ejemplo de la figura \ref{fig:conv2d}, se realiza \textit{padding}. Esto consiste en agrandar la imagen de entrada para que la salida sea de la misma dimension. En esta ocasión, se realizará padding con ceros, es decir, se rellenará con ceros donde sea necesario.
 
 \subsection{Pirámides}
-Como se menciono anteriormente, las pirámides corresponden a representaciones multi-resolución calculadas a partir de imágenes. En éstas, la señal o imagen de entrada es filtrada y submuestreada tantas veces como niveles se quieran.
+\par Como se menciono anteriormente, las pirámides corresponden a representaciones multi\-resolución calculadas a partir de imágenes. En éstas, la señal o imagen de entrada es filtrada y submuestreada tantas veces como niveles se quieran.
 
 
 \par Inicialmente, las pirámides se utilizaron para la detección e identificación de objetos que pueden o no aparecer a distintas escalas. La idea, es crear distintas copias del objeto cambiando el tamaño (o escala) y resolución de estos. En la figura \ref{fig:pyramidPaper} se observan distintas resoluciones del mismo objeto para obtener otras representaciones.
@@ -254,14 +254,14 @@ Estas pirámides se construyen con la información perdida en la pirámide de Ga
 \end{figure}
 
 
-\subsection{Reconstrucción de la imagen original}
+\subsection{Reconstrucción de la imagen original} \label{reconstimagensection}
 El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace consiste en, a partir del nivel más profundo de la pirámide repetir lo siguiente:
 \begin{enumerate}
   \item Duplicar el tamaño de la imagen.
   \item Sumar la imagen duplicada con el siguiente piso de la pirámide de Laplace. 
 \end{enumerate}
 
-\par Para duplicar el tamaño de la imagen, se utiliza interpolación. Es importante destacar que, la imagen reconstruida contiene ciertos artefactos en particular en los bordes. Esto se debe a que al hacer padding (basicamente rellenar con ceros), se pierde información de la imagen original: 
+\par Para duplicar el tamaño de la imagen, se utiliza interpolación. Es importante destacar que, la imagen reconstruida contiene ciertos artefactos en particular en los bordes. Esto se debe a que al hacer padding (básicamente rellenar con ceros), se pierde información de la imagen original: 
 
 
 \begin{figure}[H]
@@ -334,13 +334,13 @@ El proceso de reconstrucción de la imagen a partir de la pirámide de Laplace c
   \begin{tabular}{|c|c|c|}
   \hline
                           & \textit{\textbf{Cython}} & \textit{\textbf{Scipy}} \\ \hline
-  \textbf{Timpo {[}ms{]}} & $15.8$                     & $3.08$                    \\ \hline
+  \textbf{Tiempo {[}ms{]}} & $15.8$                     & $3.08$                    \\ \hline
   \end{tabular}
   \caption{Tiempos de ejecución de operación convolución.}
   \label{profile}
 \end{table}
 
-\par Se observa en la tabla \ref{profile} que la función del módulo \textit{scipy} es varias veces mas rápida (puede variar cuánto más rapida es). De todas formas, se continuará utilizando la función implementada en \textit{cython}, siguiendo las instrucciones del enunciado.
+\par Se observa en la tabla \ref{profile} que la función del módulo \textit{scipy} es varias veces mas rápida (puede variar cuánto más rápida es). De todas formas, se continuará utilizando la función implementada en \textit{cython}, siguiendo las instrucciones del enunciado.
 
 
 \par A continuación se muestra un ejemplo de la ejecución de la función \texttt{convolution\_cython} con un \textit{kernel} de la siguiente forma (es un \textit{kernel} util para la detección de bordes):
@@ -956,9 +956,8 @@ A diferencia de la pirámide de Gauss, en este caso la imagen de entrada afecta 
 
 \par Se observa además que, debido al \textit{padding} realizado en la convolución y a que esta pirámide es un filtro para detección de bordes (entre otros),  los resultados se ven más afectados que en la pirámide de Gauss. 
 
-\par Es importante destacar que, dentro de las aplicaciones de las pirámides, ésta es en particular útil porque permite comprimir el espacio que ocupa una imagen en memoria. Esto no es evidente debido a que a partir de una imagen se generan 5. Pero es fácil observar también que gran parte de los bits o píxeles serán cercanos a cero. Por esto, puede resultar más compacto en temas de memoria para almacenar una imagen.
+\par Es importante destacar que, dentro de las aplicaciones de las pirámides, ésta es en particular útil porque permite comprimir el espacio que ocupa una imagen en memoria. Esto no es evidente debido a que a partir de una imagen se generan 5. Pero es fácil observar también que gran parte de los bits o píxeles serán cercanos a cero. Por esto, puede resultar más compacto en temas de memoria para almacenar una imagen. \cite{paperPyramids}
 
-\newpage
 % - Describir implementación de resta de imágenes, incluyendo código
 % - Describir implementación de pirámide de Laplace, incluyendo código
 % - Describir implementación de valor absoluto y escalamiento, incluyendo código
@@ -969,28 +968,176 @@ A diferencia de la pirámide de Gauss, en este caso la imagen de entrada afecta 
 
 
 \subsection{Reconstrucción imagen}
-- Describir implementación de suma de imágenes, incluyendo código
-- Describir implementación de duplicación de tamaño de imágenes con interpolación, incluyendo
-código
-- Describir implementación de reconstrucción de imagen original, incluyendo código
-- Prueba del sistema de reconstrucción de la imagen original usando las pirámides de las cuatro
-imágenes entregadas, incluir las imágenes reconstruidas en el informe
-- Análisis del resultado de la reconstrucción respecto a las imágenes originales
+\subsubsection{Suma de imágenes}
+\begin{lstlisting}[language=Python, label = addCode, caption=Función suma de imágenes.]
+def add(input1, input2):
+  # Verificamos que sean del mismo tamano
+  assert (input1.shape == input2.shape), "Imagenes deben tener igual tamano"
+  output = input1 + input2
+  return output
+\end{lstlisting}
+
+\par Para la función \textit{add}, se debe verificar en primer lugar que ambas imágenes tengan igual dimensión. En caso de no ser así arroja error. Luego, simplemente se suma una imagen con la otra. 
+
+\subsubsection{\textit{Upsample}: Duplicado del tamaño de la imagen}
+\begin{lstlisting}[language=Python, label = upsampleCode, caption=Función \textit{upsample}.]
+def upsample(input):
+  # Por hacer: implementar duplicacion del tamano de imagen pixel a pixel
+  # Un pixel de la imagen de salida debe ser el promedio de los 4 pixeles mas cercanos de la imagen de entrada
+
+  def get_neighbours(input,i,j):
+    ''' FUNCION AUXILIAR
+    Funcion que entrega el promedio de los 4 pixeles mas cercanos.
+    Args: 
+      input: imagen de entrada
+    '''
+    counter = 0
+    # Se realizan 4 bloques de try/except para que al llegar a los bordes, no arroje
+    #errores la funcion. 
+    try:
+      a = input[i][j-1]
+      counter += 1
+    except IndexError:
+      a = 0
+    
+    try:
+      b = input[i][j+1]
+      counter += 1
+    except IndexError:
+      b = 0
+
+    try:
+      c = input[i-1][j]
+      counter += 1
+    except IndexError:
+      c = 0
+    
+    try:
+      c = input[i-1][j]
+      counter += 1
+    except IndexError:
+      c = 0
+
+    try:
+      d = input[i+1][j]
+      counter += 1
+    except IndexError:
+      d = 0
+
+    result = (input[i][j] + a + b + c + d)/(counter + 1)
+    
+    return np.float32(result)
+
+  # Se debe tener cuidado de que los indices no salgan fuera del tamano de la imagen
+  output = np.zeros(shape = [input.shape[0]*2, input.shape[1]*2], dtype = np.float32)
+  for i in range(output.shape[0]):
+    for j in range(output.shape[1]):
+      output[i][j] = get_neighbours(input,i//2, j//2)
+  return output
+\end{lstlisting}
+
+\par Para la implementación de la función \textit{upsample}, se debía recorrer la imagen original de la siguiente forma:
+
+\begin{gather}
+  \begin{aligned}
+      output[i,j] \: = \: \tfrac{1}{coef} ( \: input[i//2,\: j//2] & \: + \: input[i//2,\:\: j//2-1] \\  
+                                          & \: + \: input[i//2-1,\:\: j//2] \\  
+                                          & \: + \: input[i//2,\:\: j//2+1] \\   
+                                          & \: + \: input[i//2+1,\:\: j//2] \: )
+  \end{aligned}
+\end{gather}
+
+Donde $coef$ se utiliza para calcular el promedio y corresponde a la cantidad de $input$ que efectivamente existen. Esto porque en los bordes de la imagen puede no existir el elemento $[i//2,j//2 +1]$, por ejemplo.
+
+\par De esta forma, se obtiene para cada pixel, el primedio de sus vecinos (y el mismo) y se agrega a la immagen de salida. 
+
+\par Para manejar los errores que puedan ocurrir al intentar obtener los vecinos de cada pixel, se implementó una función auxiliar llamada \textit{get\_neighbours}. Ésta se encarga de resolver los problemas de los casos bordes con bloques \texttt{try, except} y entrega el promedio de los 4 vecinos más cercanos al pixel $[i,j]$.
+
+\subsubsection{Reconstrucción de imagen}
+\begin{lstlisting}[language=Python, label = reconstrCode, caption=Función de reconstrucción de la imagen.]
+def reconstruct(laplacepyramid):
+  output = []
+  lvls = len(laplacepyramid)
+  output.append(laplacepyramid[lvls - 1])
+  for i in range(lvls - 1):
+    # Por hacer: repetir estos dos pasos:
+    # (1) Duplicar tamano output usando upsample( )
+    # (2) Sumar resultado de (1) y laplacepyramid[lev] usando add( ), almacenar en output
+    output.append(add(input1 = upsample(output[i]), input2 = laplacepyramid[lvls -i -2]))
+  return output[len(output) -1]
+\end{lstlisting}
 
 
-\section{Conclusión}
+En la sección \ref{reconstimagensection}, se describe la iteración necesaria para reconstruir la imagen: 
+\begin{enumerate}
+  \item Duplicar el tamaño de la imagen.
+  \item Sumar la imagen duplicada con el siguiente piso de la pirámide de Laplace. 
+\end{enumerate}
+
+En el código, estos dos pasos se hacen en una misma línea (línea 10), para luego seguir iterando. Es importante notar que se podría devolver una imagen reconstruída para cada nivel pero se devuelve sólo la final. 
+
+
+\subsection{Resultados reconstrucción}
+A continuación, se muestran los resultados de la reconstrucción de las 4 imágenes:
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.46\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{frutas/reconstr.png}
+    \caption{Frutas reconstruidas.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.46\textwidth}
+      \centering
+      \includegraphics[width = 0.9\textwidth]{madera/reconstr.png}
+      \caption{Madera reconstruida.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.46\textwidth}
+      \centering
+      \includegraphics[width = 0.9\textwidth]{poligono/reconstr.png}
+      \caption{Poligonos reconstruidos.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.46\textwidth}
+      \centering
+      \includegraphics[width = 0.9\textwidth]{techo/reconstr.png}
+      \caption{Techo reconstruido.}
+  \end{subfigure}
+  \caption{Reconstrucción de las 4 imágenes.}
+  \label{reconstrIm}
+\end{figure}
+
+\subsection{Análisis reconstrucción de imagen}
+
+\par En primer lugar, se observan grandes diferencias en los resultados obtenidos en cada imagen independiente de la `complegidad' de cada imagen. Por ejemplo, una imagen que contiene solo 5 figuras geométricas obtiene peores resultados que la imagen de la madera. 
+
+\par En particular, en la imagen de los polígonos, se observa además como los artefactos que se observan en la pirámide de Laplace (en la figura \ref{lppoligono}), se observan también en la reconstrucción de la imagen.
+
+\par Se observa por otro lado, que el problema generado por la implementación de \textit{padding}, la reconstrucción en los bordes de la figura contiene artefactos: un marco que dependiendo de la cantidad de niveles de la pirámide, es cuanto cubre la imagen generada. 
 
 
 \newpage
+\section{Conclusión}
+Se adquirió conociemiento sobre una nueva forma de hacer más eficiente el código en Python con \textit{Cython}. Esta permite escribir funciones, clases y otros, en bajo nivel y ahorrar tiempo de ejecución debido a las ventajas de \texttt{C} por sobre \texttt{Python}. Por ejemplo, asignación del tipo de variables (y no asignación dinámica como lo es python), y otras ventajas más. 
+
+\par Al comparar la velocidad de la función \textit{convolution\_cython} con la implementada en el módulo \texttt{scipy.signal}, se observó que esta no era mejor. Por esto, se comprende el carácter pedagógico de implementar la convolución en \textit{cython}. El objetivo era comprender el costo computacional de estas operaciones y comprender como operan sobre las imágenes. 
+
+\par Se observó el efecto de `inventar' información al realizar \textit{padding}. Este además fue la causa de que al reconstruir las imágenes se obtubieran resultados no excelentes. Esto se puede solucionar implementando otro tipo de \textit{padding}: rellenar en lugar de con ceros, con el promedio de los pixeles más cercanos. 
+
+\par Durante la confección del informe, se aprendió sobre distintas utilidades de las piramides descritas en el paper \cite{paperPyramids}. Estas van desde generar distintas representaciones de una imagen u objeto para detección hasta compresión en memoria de las imágenes. 
+
+\newpage
 \begin{thebibliography}{X}
-    \bibitem{WikiConv} Wikipedia: Convolution. \\
-    \url{https://en.wikipedia.org/wiki/Convolution#Visual_explanation} 
+  \bibitem{imConv2d} Towards Data Science: Intuitively Understanding Convolutions for Deep Learning. By Irhum Shafkat. \\
+  \url{https://towardsdatascience.com/intuitively-understanding-convolutions-for-deep-learning-1f6f42faee1}   
 
-    \bibitem{imConv2d} Towards Data Science: Intuitively Understanding Convolutions for Deep Learning. By Irhum Shafkat. \\
-    \url{https://towardsdatascience.com/intuitively-understanding-convolutions-for-deep-learning-1f6f42faee1} 
+  \bibitem{WikiConv} Wikipedia: Convolution. \\
+  \url{https://en.wikipedia.org/wiki/Convolution#Visual_explanation} 
 
-    \bibitem{paperPyramids} Pyramid methods in image processing. E. H. Adelson, C. H. Anderson,  J. R. Bergen,  P. J. Burt,  J. M. Ogden. $[1984]$
-    \url{http://persci.mit.edu/pub_pdfs/RCA84.pdf}
+  \bibitem{paperPyramids} Pyramid methods in image processing. E. H. Adelson, C. H. Anderson,  J. R. Bergen,  P. J. Burt,  J. M. Ogden. $[1984]$
+  \url{http://persci.mit.edu/pub_pdfs/RCA84.pdf}
 
 \end{thebibliography}
 
