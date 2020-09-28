@@ -201,7 +201,7 @@ La pirámide de gauss corresponde a un caso particular de las pirámides en las 
 \par En la figura se observa el efecto de aumentar $\sigma$. Por otro lado, en los bordes de las figuras \ref{fig:frutas} (a) y (b), se observan los bordes negros que corresponden al \textit{padding} mencionado anteriormente. 
 
 
-\subsubsection{Piramide de Laplace}
+\subsubsection{Piramide de Laplace} \label{lpsection}
 Estas pirámides se construyen con la información perdida en la pirámide de Gauss. Para esto, se resta el nivel actual de la pirámide de Gauss con el siguiente (antes del sub-muestreo). El último nivel de la pirámide de Laplace corresponde al último nivel de la pirámide de gauss.
 
 \bigskip
@@ -446,7 +446,7 @@ def do_blur(input, sigma, height):
 
 \par El suavizado de imágenes consiste en concatenar filtros: primero se aplica el filtro horizontal y luego el vertical. De esta forma se obtiene el suavizado (o \textit{blur}), que corresponde a un filtro pasabajo. 
 
-\par En la figura X, se muestra el resultado de aplicar \textit{blur} a la imagen del techo:
+\par En la figura \ref{blurtecho}, se muestra el resultado de aplicar \textit{blur} a la imagen del techo:
 
 \begin{figure}[H]
   \centering
@@ -462,33 +462,507 @@ def do_blur(input, sigma, height):
       \caption{Imagen obtenida.}
   \end{subfigure}
   \caption{Salida obtenida al usar la función \textit{do\_blur}.}
-  \label{blur}
+  \label{blurtecho}
 \end{figure}
 
+\subsubsection{Submuestreo de la imagen}
+\begin{lstlisting}[language=Python, label = subsampleCode, caption=Submuestreo de imágenes.]
+def subsample(input):
+  # Creamos el output. Tiene la mitad del ancho y del largo de la imagen original. 
+	result = np.zeros(shape = [input.shape[0] // 2, input.shape[1] // 2], dtype = np.float32)
+  
+  # Nos quedamos con todos los pixeles pares (y el 0,0).
+	for i in range(result.shape[0]):
+		for j in range(result.shape[1]):
+			result[i][j] = input[i*2][j*2]
+			
+	return result
+\end{lstlisting}
 
-\newpage
+\par Para el submuestreo, se solicitó que se guardaran sólo las columnas y las filas pares. Esto se asegura al recorrer la imagen original con el índice de la imagen de salida multiplicado por dos:
+
+\begin{equation*}
+  Output[i, j] \: = \: Input[2i, \: 2j],
+\end{equation*}
+
+Esto para los $i$ y $j$ mientras sean menores que $alto/2$ y $largo/2$. En la siguiente figura, se observa el resultado de aplicar el submuestreo a una imagen:
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{techo.png}
+    \caption{Imagen original.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.45\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{conv/techosub.png}
+      \caption{Imagen obtenida.}
+  \end{subfigure}
+  \caption{Salida obtenida al usar la función \textit{subsample}.}
+  \label{substecho}
+\end{figure}
+
+\par Es importante destacar que no solamente se escaló la imagen en el documento, sino que, al comprobar las dimensiones de cada una en Python, se obtiene el resultado esperado:
+
+\begin{lstlisting}[language=Python, label = subsampletestCode, caption=Prueba del suavizado de imágenes.]
+# Prueba de la funcion subsample
+im_reduced = subsample(input)
+print("entrada.shape = ", input.shape)
+print("Salida.shape = ", im_reduced.shape)
+# -----------Output generado en python-------------------
+entrada.shape =  (256, 512)
+Salida.shape =  (128, 256)
+\end{lstlisting}
+
+
+\subsubsection{Piramide de Gauss: computo y grafico}
+
+\begin{lstlisting}[language=Python, label = gpCode, caption=Implementación pirámide de Gauss.]
+# Calculo de la piramide de gauss:
+def compute_gauss_pyramid(input, nlevels):  
+  gausspyramid = []
+  current = np.copy(input)
+  gausspyramid.append(current)
+  for i in range(1,nlevels):
+    current = subsample(do_blur(input = gausspyramid[i-1], sigma = 2, height = 7))
+    gausspyramid.append(current)
+  return gausspyramid
+
+# Display de la piramide de Gauss:
+def show_gauss_pyramid(pyramid):
+  for i, im in enumerate(pyramid):
+    lvl = i + 1
+    print("Imagen para nivel ", lvl)
+    cv2_imshow( im )
+\end{lstlisting}
+
+\par La implementación de la pirámide de Gauss es simplemente concatenar lo realizado antes e iterar la cantidad de niveles que se deseen. De esta forma, en el primer nivel está la imagen original y en los siguentes se realiza lo siguente:
+
+\begin{enumerate}
+  \item Suavizar imagen del nivel anterior. 
+  \item Submuestrear imagen obtenida en 1. 
+  \item Agregar el resultado a la pirámide.
+\end{enumerate}
+
+\par Para graficar la pirámide de Gauss, solo se iteró sobre cada imagen que esta contiene y se utilizó la función \texttt{cv2\_imshow}.
+
+\subsubsection{Resultados pirámide de Gauss}
+\par En la siguiente sección, se muestran los resultados de aplicar lo anterior con los parámetros solicitados: 
+\par \textbf{Frutas:}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{frutas/gp1.png}
+    \caption{Nivel 1.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{frutas/gp2.png}
+      \caption{Nivel 2.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{frutas/gp3.png}
+      \caption{Nivel 3.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.22\textwidth]{frutas/gp4.png}
+      \caption{Nivel 4.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.11\textwidth]{frutas/gp5.png}
+      \caption{Nivel 5.}
+  \end{subfigure}
+  \caption{Pirámide de Gauss de la imagen \texttt{frutas.png}.}
+  \label{gpfrutas}
+\end{figure}
+
+\par \textbf{Madera:}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{madera/gp1.png}
+    \caption{Nivel 1.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{madera/gp2.png}
+      \caption{Nivel 2.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{madera/gp3.png}
+      \caption{Nivel 3.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.22\textwidth]{madera/gp4.png}
+      \caption{Nivel 4.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.11\textwidth]{madera/gp5.png}
+      \caption{Nivel 5.}
+  \end{subfigure}
+  \caption{Pirámide de Gauss de la imagen \texttt{madera.png}.}
+  \label{gpmadera}
+\end{figure}
+
+\par \textbf{Poligonos:}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{poligono/gp1.png}
+    \caption{Nivel 1.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{poligono/gp2.png}
+      \caption{Nivel 2.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{poligono/gp3.png}
+      \caption{Nivel 3.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.22\textwidth]{poligono/gp4.png}
+      \caption{Nivel 4.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.11\textwidth]{poligono/gp5.png}
+      \caption{Nivel 5.}
+  \end{subfigure}
+  \caption{Pirámide de Gauss de la imagen \texttt{poligono.png}.}
+  \label{gppoligono}
+\end{figure}
+
+\par \textbf{Techo:}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{techo/gp1.png}
+    \caption{Nivel 1.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{techo/gp2.png}
+      \caption{Nivel 2.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{techo/gp3.png}
+      \caption{Nivel 3.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.22\textwidth]{techo/gp4.png}
+      \caption{Nivel 4.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.11\textwidth]{techo/gp5.png}
+      \caption{Nivel 5.}
+  \end{subfigure}
+  \caption{Pirámide de Gauss de la imagen \texttt{techo.png}.}
+  \label{gptecho}
+\end{figure}
+
+\subsection{Analisis pirámide de Gauss}
+En primer lugar, es importante destacar que el resultado obtenido en la pirámide de Gauss depende de varios parámetros: 
+
+\begin{itemize}
+  \item \textbf{Niveles:} Cantidad de niveles que tendrá la pirámide. 
+  \item \textbf{$\sigma$:} Desviación estándar para el filtro \textit{blur}.
+  \item \textbf{\textit{Height}:} Tamaño del filtro \textit{blur}.
+\end{itemize}
+
+Por otro lado, se observa que los resultados son similares independiente de la imagen: En todos los casos, se observa la evidente reducción del tamaño (recordar que además estan escaladas en el documento, de otra forma se los ultimos niveles no se distinguían) y se observa también el efecto del filtro \textit{blur}. El principal efecto es que los bordes se suavizan. Se notó también que a mayor $\sigma$ o \textit{Height}, este efecto se notaba más en las imágenes de salida. 
+
+
 %- Describir implementación de convolución, incluyendo código
 %- Describir implementación de cálculo de máscaras, incluyendo código
 % - Describir implementación de suavizado de imágenes, incluyendo código
-- Describir implementación de submuestreo, incluyendo código
-- Describir implementación de pirámide de Gauss, incluyendo código
-- Describir implementación: graficar pirámide de Gauss, incluyendo código
-- Prueba del sistema de cálculo de pirámide de Gauss sobre 4 imágenes entregadas, incluir las
-imágenes de las pirámides resultantes en el informe
-- Análisis del desempeño del cálculo de la pirámide de Gauss, analizando las imágenes resultantes
+% - Describir implementación de submuestreo, incluyendo código
+% - Describir implementación de pirámide de Gauss, incluyendo código
+% - Describir implementación: graficar pirámide de Gauss, incluyendo código
+% - Prueba del sistema de cálculo de pirámide de Gauss sobre 4 imágenes entregadas, incluir las
+% imágenes de las pirámides resultantes en el informe
+% - Análisis del desempeño del cálculo de la pirámide de Gauss, analizando las imágenes resultantes
 
 
-\subsection{Pirámide de \textit{Laplace}:}
-- Describir implementación de resta de imágenes, incluyendo código
-- Describir implementación de pirámide de Laplace, incluyendo código
-- Describir implementación de valor absoluto y escalamiento, incluyendo código
-- Describir implementación: graficar pirámide de Laplace, incluyendo código
+\newpage
+\subsection{Pirámide de \textit{Laplace}}
+\subsubsection{Resta de imágenes}
+
+\begin{lstlisting}[language=Python, label = subCode, caption=Implementación resta de imágenes.]
+def subtract(input1, input2):
+  # Verificamos que sean del mismo tamano
+  assert (input1.shape == input2.shape), "Imagenes deben tener igual tamano"
+  
+  output = input1 - input2
+  return output
+\end{lstlisting}
+
+\par Para la función \textit{subtract}, se debe verificar en primer lugar que ambas imágenes tengan igual dimensión. En caso de no ser así arroja error. Luego, simplemente se resta una imagen con la otra. 
+
+
+\subsubsection{Pirámide de Laplace}
+\begin{lstlisting}[language=Python, label = lpCode, caption=Cómputo pirámide de Laplace.]
+def compute_laplace_pyramid(input, nlevels):
+  gausspyramid = []
+  laplacepyramid = []
+  current = np.copy(input)
+  gausspyramid.append(current)
+  for i in range(1, nlevels):
+    # Por hacer:
+    # 1) Aplicar do_blur( ) a la imagen gausspyramid[i-1], con sigma 2.0 y ancho 7
+    blur_im = do_blur(input = gausspyramid[i-1], sigma = 2, height = 7)
+    # 2) Guardar en laplacepiramid el resultado de restar gausspyramid[i - 1] y la imagen calculada en (1)
+    laplacepyramid.append(np.float32(subtract(input1 = gausspyramid[i-1], input2 = blur_im)))
+    # 3) Submuestrear la imagen calculada en (1), guardar el resultado en current
+    current = subsample( input = blur_im )
+    gausspyramid.append(current)
+  laplacepyramid.append(current)  # Se agrega el ultimo piso de la piramide de Laplace
+  return laplacepyramid
+\end{lstlisting}
+
+\par El cálculo de la pirámide de Laplace, como se mencionó en la sección \ref{lpsection}, consiste en almacenar la información perdida entre un nivel y otro de la pirámide de Gauss. Para esto, se comienza con el primer piso de la pirámide de Gauss y luego se itera en lo siguiente (paso $i$ de la iteración):
+
+\begin{enumerate}
+  \item Suavizar (filtro \textit{blur}) imagen del piso anterior de la pirámide de gauss ($GaussPiramyd[i-1]$). 
+  \item Restar la imagen obtenida con la original ($GaussPiramyd[i-1]$ menos imagen recién obtenida).
+  \item Agregar lo obtenido a la pirámide de Laplace. 
+\end{enumerate}
+
+\subsubsection{Escalamiento y valor absoluto de la imágen}
+\begin{lstlisting}[language=Python, label = scaleabsCode, caption=Función \textit{scale\_abs}.]
+def scale_abs(input, factor):
+  # Creamos imagen de salida del mismo tamano del de la entrada
+  output = np.zeros_like(input)
+  # Por hacer: aplicar valor absoluto a los pixeles de la imagen pixel a pixel y luego escalar los pixeles usando el factor indicado
+  for i in range(input.shape[0]):
+    for j in range(input.shape[1]):
+      output[i][j] = np.abs(input[i][j]) * factor
+  
+  return np.float32(output)
+\end{lstlisting}
+
+\par En la implementación se observa que lo que se hace es simplemente iterar por todos los pixeles calculando el valor absoluto y luego escalando por un factor ($factor$) que es un \textit{input} de la función. 
+
+\subsubsection{Graficar pirámide de Laplace}
+\begin{lstlisting}[language=Python, label = showlpCode, caption=Función para graficar pirámide de Laplace.]
+def show_laplace_pyramid(pyramid):
+  # Por hacer: mostrar las imagenes de la piramide de laplace:
+  #  Las imagenes deben ser escaladas antes de mostrarse usando scale_abs
+  #  Sin embargo, la ultima imagen del ultimo piso se muestra tal cual
+  # Se recomienda usar cv2_imshow( ) para mostrar las imagenes
+  for i, im in enumerate(pyramid):
+    lvl = i + 1
+    print("Imagen para nivel ", lvl)
+    # Se escalan todas menos la ultima
+    if i != len(pyramid)-1:
+      cv2_imshow( scale_abs(im, 5) )
+    else:
+      cv2_imshow( im ) 
+\end{lstlisting}
+
+\par En esta función cada imagen, excepto la última, debe ser escalada antes de mostrarse. Para esto, se agrega el \texttt{if} en la línea 10. 
+
+\subsection{Resultados pirámide de Laplace}
+A continuación, se muestran los resultados obtenidos de aplicar el cálculo de las pirámides de Laplace a las 4 imágenes con los parámetros solicitados:
+
+\par \textbf{Frutas:}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{frutas/lp1.png}
+    \caption{Nivel 1.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{frutas/lp2.png}
+      \caption{Nivel 2.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{frutas/lp3.png}
+      \caption{Nivel 3.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.22\textwidth]{frutas/lp4.png}
+      \caption{Nivel 4.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.11\textwidth]{frutas/lp5.png}
+      \caption{Nivel 5.}
+  \end{subfigure}
+  \caption{Pirámide de Laplace de la imagen \texttt{frutas.png}.}
+  \label{lpfrutas}
+\end{figure}
+
+\par \textbf{Madera:}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{madera/lp1.png}
+    \caption{Nivel 1.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{madera/lp2.png}
+      \caption{Nivel 2.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{madera/lp3.png}
+      \caption{Nivel 3.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.22\textwidth]{madera/lp4.png}
+      \caption{Nivel 4.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.11\textwidth]{madera/lp5.png}
+      \caption{Nivel 5.}
+  \end{subfigure}
+  \caption{Pirámide de Laplace de la imagen \texttt{madera.png}.}
+  \label{lpmadera}
+\end{figure}
+
+\par \textbf{Poligonos:}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{poligono/lp1.png}
+    \caption{Nivel 1.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{poligono/lp2.png}
+      \caption{Nivel 2.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{poligono/lp3.png}
+      \caption{Nivel 3.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.22\textwidth]{poligono/lp4.png}
+      \caption{Nivel 4.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.11\textwidth]{poligono/lp5.png}
+      \caption{Nivel 5.}
+  \end{subfigure}
+  \caption{Pirámide de Laplace de la imagen \texttt{poligono.png}.}
+  \label{lppoligono}
+\end{figure}
+
+\par \textbf{Techo:}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width = 0.9\textwidth]{techo/lp1.png}
+    \caption{Nivel 1.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{techo/lp2.png}
+      \caption{Nivel 2.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.45\textwidth]{techo/lp3.png}
+      \caption{Nivel 3.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.22\textwidth]{techo/lp4.png}
+      \caption{Nivel 4.}
+  \end{subfigure}
+  ~ 
+  \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width = 0.11\textwidth]{techo/lp5.png}
+      \caption{Nivel 5.}
+  \end{subfigure}
+  \caption{Pirámide de Laplace de la imagen \texttt{techo.png}.}
+  \label{lptecho}
+\end{figure}
+
+
+
+\newpage
+% - Describir implementación de resta de imágenes, incluyendo código
+% - Describir implementación de pirámide de Laplace, incluyendo código
+% - Describir implementación de valor absoluto y escalamiento, incluyendo código
+% - Describir implementación: graficar pirámide de Laplace, incluyendo código
 - Prueba del sistema de cálculo de pirámide de Laplace sobre 4 imágenes entregadas, incluir las
 imágenes de las pirámides resultantes en el informe
 - Análisis del desempeño del cálculo de la pirámide de Laplace, analizando las imágenes resultantes
 
 
-\subsection{Reconstrucción imagen:}
+\subsection{Reconstrucción imagen}
 - Describir implementación de suma de imágenes, incluyendo código
 - Describir implementación de duplicación de tamaño de imágenes con interpolación, incluyendo
 código
