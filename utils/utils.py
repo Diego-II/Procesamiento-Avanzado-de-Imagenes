@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from timeit import default_timer as timer
 import sys
+import torch
 
 def train_for_classification(net, train_loader, test_loader, optimizer, 
                              criterion, lr_scheduler=None,epochs=1, reports_every=1, device='cuda'):
